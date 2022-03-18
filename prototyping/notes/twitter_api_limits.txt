@@ -1,0 +1,20 @@
+How many articles are there?
+
+Request cap is 75 (retweets/quote tweets), 300 (conversation id) per 15 minute window, 500k total per app per month with regular status, 2m total per app per month with elevated status, we can also look into academic researcher status
+
+retweets: up to 100 per request
+quote tweets: up to 100 per request
+replies: up to 500 per request
+
+use max_results field
+
+Replies:
+Request conversation id of the tweet first (tweet property)
+Use search tweets to get replies corresp to that conversation id
+
+Use BFS to discover tweets and make requests
+
+Pain points:
+1) Translating to Spark: Parallelizing BFS (go to certain depth, then split BFS, one task for each node at bottom of tree, continue and repeat)
+2) Pursuing graph in direction of max engagement (how to weight the 3 inputs to decide nodes to pursue)
+3) Balancing tweet rate limits
