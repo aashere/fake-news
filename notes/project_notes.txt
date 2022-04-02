@@ -18,3 +18,13 @@ Pain points:
 1) Translating to Spark: Parallelizing BFS (go to certain depth, then split BFS, one task for each node at bottom of tree, continue and repeat)
 2) Pursuing graph in direction of max engagement (how to weight the 3 inputs to decide nodes to pursue)
 3) Balancing tweet rate limits
+-------------
+Tweet object: public_metrics for counts
+
+Follow-up:
+1) Academic Researcher access
+2) Getting retweet and quote tweet tweet id
+3) Get created_at for retweets and quote tweets?
+4) Look at common graph features
+5) Reread Arxiv paper to figure out which graph features they used and what fake/real news graph structure looks like
+6) Look at Swarm Intelligence/flocking algorithms for clustering tweets
