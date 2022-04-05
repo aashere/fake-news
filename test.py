@@ -1,0 +1,3 @@
+from preprocessing.data_collection import fetch_data_query
+
+fetch_data_query(request_threshold=10)

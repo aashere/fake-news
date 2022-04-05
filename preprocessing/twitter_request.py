@@ -1,9 +1,9 @@
 import requests, json, re
-from preprocessing.utils import article_time_to_utc
+from preprocessing.utils import get_end_time_timestamp
+from math import ceil
 
 domain = "https://api.twitter.com"
 headers = {'Authorization': None}
-
 
 # Load API keys from file
 api_keys = dict()
@@ -17,7 +17,7 @@ def make_request(endpoint, request_params):
     request_param_string = "?"
 
     for k, v in request_params.items():
-        request_param_string += k + "=" + v + "&"
+        request_param_string += str(k) + "=" + str(v) + "&"
 
     r = requests.get(domain + endpoint + request_param_string, headers=headers)
     if r.status_code != 200:
@@ -25,35 +25,50 @@ def make_request(endpoint, request_params):
     else:
         return json.loads(r.text)
 
-def query_tweets(articles, logger=None):
+def batch_request(num_requests, rate_limit=180):
+    batch_idxs = []
+
+    num_splits = ceil(num_requests / rate_limit)
+
+    for split in range(num_splits):
+        start_idx = split*rate_limit
+        if split == num_splits - 1:
+            end_idx = start_idx + (num_requests % rate_limit)
+        else:
+            end_idx = start_idx + rate_limit
+        batch_idxs.append((start_idx, end_idx))
+    return batch_idxs
+
+# Filtered means did we previously filter articles to only be in last 7 days
+def query_tweets(article, filtered=False, logger=None):
     endpoint = "/2/tweets/search/recent"
     tweet_fields_args = ','.join(['text','conversation_id','geo','created_at','public_metrics','author_id'])
 
-    response = []
     # TODO: Update to v1.1 if you get Elevated access
-    # Assume: queries contains dicts with id, keywords, date
+    # Assume: queries contains dicts with id, keywords, utc timestamp
     # V2 queries only go as far back as 1 week from today
-    for i, article in enumerate(articles):
 
-        query = article['keywords']
-        end_time = article_time_to_utc(article['date'])
-        max_results = 100
+    query = article['keywords']
+    if filtered:
+        end_time = article['utc']
+    else:
+        end_time = get_end_time_timestamp()
+    max_results = 100
 
-        request_params = {
-            'query': query,
-            'tweet.fields': tweet_fields_args,
-            'end_time': end_time,
-            'max_results': max_results
-        }
+    request_params = {
+        'query': query,
+        'tweet.fields': tweet_fields_args,
+        'end_time': end_time,
+        'max_results': max_results
+    }
 
-        r_dict = make_request(endpoint, request_params)
-        if not r_dict:
-            if logger:
-                logger.log_query_request_failure(article['id'])
-            continue
+    r_dict = make_request(endpoint, request_params)
+    if not r_dict:
+        if logger:
+            logger.log_query_request_failure(article['id'])
+        return None
 
-        response.append(r_dict)
-    return {'id': article['id'], 'response': response}        
+    return {'id': article['id'], 'response': r_dict}        
 
 
 def __fetch_post_data(self, tweet_ids):

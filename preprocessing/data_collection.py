@@ -2,7 +2,7 @@ import pandas as pd
 import re, json
 from data.raw.tweet_articles.tweet_likes_false import d as false_scraped
 from data.raw.tweet_articles.tweet_likes_true import d as true_scraped
-from preprocessing.twitter_request import query_tweets
+from preprocessing.twitter_request import batch_request, query_tweets
 
 def extract_tweet_ids(self, thresholded=False, scraped=False, likes_threshold=100):
     if thresholded:
@@ -73,18 +73,38 @@ def fetch_data_query(logger=None, request_threshold=None):
 
     with open('data/processed/article_keywords/true_keywords.json', 'r') as f:
         true_articles = json.loads(f.read())
-    
+
+    # Split queries into batches based on the rate limit
+    rate_limit = 180
+    fake_batches = batch_request(len(fake_articles), rate_limit=rate_limit)
+    true_batches = batch_request(len(true_articles), rate_limit=rate_limit)
+
     fake_responses = []
-    for article_dict in fake_articles:
-        fake_responses.append(query_tweets(article_dict, logger=logger))
-        
+    for batch_idx, batch in enumerate(fake_batches):
+        article_batch = fake_articles[batch[0]:batch[1]]
+        for article_idx, article_dict in enumerate(article_batch):
+            if request_threshold and article_idx + batch_idx*rate_limit >= request_threshold:
+                break
+            response = query_tweets(article_dict, logger=logger)
+            if not response:
+                continue
+            fake_responses.append(response)
+
     true_responses = []
-    for article_dict in true_articles:
-        true_responses.append(query_tweets(article_dict, logger=logger))
+    for batch_idx, batch in enumerate(true_batches):
+        article_batch = true_articles[batch[0]:batch[1]]
+        for article_idx, article_dict in enumerate(article_batch):
+            if request_threshold and article_idx + batch_idx*rate_limit >= request_threshold:
+                break
+            response = query_tweets(article_dict, logger=logger)
+            if not response:
+                continue
+            true_responses.append(response)
 
+    # TODO: parse out results to dataframe    
     # Write query response data to file
-    with open('data/processed/twitter_data/raw_response/fake_query_response.json', 'w+') as f:
-        f.write(json.dumps(fake_responses))
+    #with open('data/processed/twitter_data/raw_response/fake_query_response.json', 'w+') as f:
+    #    f.write(json.dumps(fake_responses))
 
-    with open('data/processed/twitter_data/raw_response/true_query_response.json', 'w+') as f:
-        f.write(json.dumps(true_responses))
+    #with open('data/processed/twitter_data/raw_response/true_query_response.json', 'w+') as f:
+    #    f.write(json.dumps(true_responses))

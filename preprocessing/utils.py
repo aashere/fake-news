@@ -1,4 +1,6 @@
 import re
+from datetime import datetime, timedelta, timezone
+from time import strptime
 
 month_to_num = {
     'January': '01',
@@ -30,3 +32,16 @@ def article_time_to_utc(article_time):
     utc_timestamp = year + '-' + month + '-' + day + 'T00:00:00Z'
     return utc_timestamp
 
+# Get timestamp 5 days before today
+def get_end_time_timestamp(days=5):
+    time_now = datetime.now(timezone.utc)
+    delta = timedelta(days=days)
+
+    range_start = time_now - delta
+    return str(range_start)[:10] + 'T00:00:00Z'
+
+def is_timestamp_in_range(timestamp, end_time):
+    timestamp = strptime(timestamp, "%Y-%m-%dT%H:%M:%SZ")
+    end_time = strptime(end_time, "%Y-%m-%dT%H:%M:%SZ")
+
+    return max(timestamp, end_time) == timestamp
