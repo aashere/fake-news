@@ -1,21 +1,27 @@
 import json
-from preprocessing.preprocessing import Preprocessor
+from preprocessing.data_collection import fetch_data_query
+from logger import Logger
+from nlp.nlp import extract_query_data
 
-# Load API keys from file
-api_keys = dict()
+# Logger for logging
+log = Logger()
 
-with open('api-keys/api_keys_ameya.txt', 'r') as f:
-    api_keys = json.loads(f.read())
-
-# TODO: Edit preprocessing to maximize info returned in one request
-proc = Preprocessor(logging=False)
+# Extract keywords from scraped data to form queries
+#extract_query_data()
 
 # Extract tweet id's into data/processed folder
 #proc.extract_tweet_ids()
 
-# Get text from API
-#proc.extract_text_data(api_keys, 30)
+# TODO: Threshold querying and calculate end_time
+# Get tweets by query
+#fetch_data_query(logger=log)
 
-# TODO: Get metrics from API
+# TODO: Get user data
 
-# TODO: Get graph data from API
+# TODO: Get replies data
+
+# TODO: Parse data out
+
+# TODO: Analyze features
+
+log.dump()

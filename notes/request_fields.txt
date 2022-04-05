@@ -1,0 +1,21 @@
+Request 1: TWEET GET
+tweet body
+conversation id
+location
+post timestamp
+like count
+retweet count
+quote tweet count
+reply count
+user id
+
+Request 2: REPLIES GET
+replies (thresholded by reply count)
+
+Request 3: USERS GET
+user location
+user account creation timestamp
+user follower count
+user followee count
+user followers
+user followees
