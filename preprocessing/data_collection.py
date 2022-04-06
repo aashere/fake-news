@@ -1,4 +1,3 @@
-from aiohttp import request
 import pandas as pd
 import re, json, time
 from data.raw.tweet_articles.tweet_likes_false import d as false_scraped
