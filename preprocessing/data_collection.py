@@ -1,5 +1,5 @@
 import pandas as pd
-import re, json
+import re, json, time
 from data.raw.tweet_articles.tweet_likes_false import d as false_scraped
 from data.raw.tweet_articles.tweet_likes_true import d as true_scraped
 from preprocessing.twitter_request import batch_request, query_tweets
@@ -66,7 +66,7 @@ def extract_tweet_ids(self, thresholded=False, scraped=False, likes_threshold=10
         fake_data_ids.to_csv('data/tweet-ids/false_tweet_ids.txt', header=None, index=None, sep='\n', encoding='utf8')
         real_data_ids.to_csv('data/tweet-ids/real_tweet_ids.txt', header=None, index=None, sep='\n', encoding='utf8')
 
-def fetch_data_query(logger=None, request_threshold=None):
+def query_raw_data(logger=None, request_threshold=None):
     # Load in article query dicts from file
     with open('data/processed/article_keywords/fake_keywords.json', 'r') as f:
         fake_articles = json.loads(f.read())
@@ -79,32 +79,38 @@ def fetch_data_query(logger=None, request_threshold=None):
     fake_batches = batch_request(len(fake_articles), rate_limit=rate_limit)
     true_batches = batch_request(len(true_articles), rate_limit=rate_limit)
 
-    fake_responses = []
-    for batch_idx, batch in enumerate(fake_batches):
-        article_batch = fake_articles[batch[0]:batch[1]]
-        for article_idx, article_dict in enumerate(article_batch):
-            if request_threshold and article_idx + batch_idx*rate_limit >= request_threshold:
-                break
-            response = query_tweets(article_dict, logger=logger)
-            if not response:
-                continue
-            fake_responses.append(response)
+    with open('data/raw/twitter_data/fake_twitter_raw.json', 'w+') as f:
+        f.write('[')
+        for batch_idx, batch in enumerate(fake_batches):
+            article_batch = fake_articles[batch[0]:batch[1]]
+            for article_idx, article_dict in enumerate(article_batch):
+                if request_threshold and article_idx + batch_idx*rate_limit >= request_threshold:
+                    break
+                response = query_tweets(article_dict, 'fake', logger=logger)
+                if not response:
+                    continue
+                if (not request_threshold and article_idx + batch_idx*rate_limit == len(fake_articles) - 1) or (request_threshold and article_idx + batch_idx*rate_limit == request_threshold - 1):
+                    f.write(response + '\n')
+                else:
+                    f.write(response + ',\n')
+            # Sleep 15:05 min between batches
+            time.sleep(905)
+        f.write(']')
 
-    true_responses = []
-    for batch_idx, batch in enumerate(true_batches):
-        article_batch = true_articles[batch[0]:batch[1]]
-        for article_idx, article_dict in enumerate(article_batch):
-            if request_threshold and article_idx + batch_idx*rate_limit >= request_threshold:
-                break
-            response = query_tweets(article_dict, logger=logger)
-            if not response:
-                continue
-            true_responses.append(response)
-
-    # TODO: parse out results to dataframe    
-    # Write query response data to file
-    #with open('data/processed/twitter_data/raw_response/fake_query_response.json', 'w+') as f:
-    #    f.write(json.dumps(fake_responses))
-
-    #with open('data/processed/twitter_data/raw_response/true_query_response.json', 'w+') as f:
-    #    f.write(json.dumps(true_responses))
+    with open('data/raw/twitter_data/real_twitter_raw.json', 'w+') as f:
+        f.write('[')
+        for batch_idx, batch in enumerate(true_batches):
+            article_batch = true_articles[batch[0]:batch[1]]
+            for article_idx, article_dict in enumerate(article_batch):
+                if request_threshold and article_idx + batch_idx*rate_limit >= request_threshold:
+                    break
+                response = query_tweets(article_dict, 'real', logger=logger)
+                if not response:
+                    continue
+                if (not request_threshold and article_idx + batch_idx*rate_limit == len(true_articles) - 1) or (request_threshold and article_idx + batch_idx*rate_limit == request_threshold - 1):
+                    f.write(response + '\n')
+                else:
+                    f.write(response + ',\n')
+            # Sleep 15:05 min between batches
+            time.sleep(905)
+        f.write(']')

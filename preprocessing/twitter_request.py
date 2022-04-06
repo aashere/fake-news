@@ -40,45 +40,46 @@ def batch_request(num_requests, rate_limit=180):
     return batch_idxs
 
 # Filtered means did we previously filter articles to only be in last 7 days
-def query_tweets(article, filtered=False, logger=None):
+def query_tweets(article, type, filtered=False, logger=None):
     endpoint = "/2/tweets/search/recent"
     tweet_fields_args = ','.join(['text','conversation_id','geo','created_at','public_metrics','author_id'])
+    user_fields_args = ','.join(['username','created_at','public_metrics','location'])
 
     # TODO: Update to v1.1 if you get Elevated access
     # Assume: queries contains dicts with id, keywords, utc timestamp
     # V2 queries only go as far back as 1 week from today
 
-    query = article['keywords']
+    # Exclude retweets and quote tweets
+    query = article['keywords'] + ' -is:retweet -is:quote'
     if filtered:
         end_time = article['utc']
     else:
         end_time = get_end_time_timestamp()
-    max_results = 100
+    max_results = 10
 
     request_params = {
         'query': query,
         'tweet.fields': tweet_fields_args,
+        'user.fields': user_fields_args,
         'end_time': end_time,
-        'max_results': max_results
+        'max_results': max_results,
+        'expansions': 'author_id'
     }
 
     r_dict = make_request(endpoint, request_params)
+    print(r_dict)
     if not r_dict:
         if logger:
-            logger.log_query_request_failure(article['id'])
+            logger.log_query_request_failure(str(article['id']) + ' ' + type)
         return None
 
-    return {'id': article['id'], 'response': r_dict}        
+    return json.dumps({'id': article['id'], 'response': r_dict})      
 
+def fetch_replies(self, conversation_id):
+    pass
 
-def __fetch_post_data(self, tweet_ids):
-    request_args = ','.join(['text','conversation_id','geo','created_at','public_metrics','author_id'])
-
-def __fetch_user_data(self, user_ids):
-    # TODO: Add get followers and following
-    request_args = ','.join(['username','created_at','public_metrics','location'])
-def __fetch_reply_data(self, conversation_ids):
-    request_args= ','.join([''])
+def fetch_graph_data(self, user_id):
+    pass
 
 def __fetch_text_data(self, tweet_ids, domain, headers, request_threshold):
     text_data = []
@@ -111,10 +112,10 @@ def __fetch_text_data(self, tweet_ids, domain, headers, request_threshold):
                         tweet_text_data['tweet_text'] = filtered_text
                     else:
                         if self.log_tweet_significance:
-                            self.tweet_log += tweet_id+"\n"
+                            self.tweet_log += str(tweet_id)+"\n"
                 else:
                     if self.log_tweet_significance:
-                            self.tweet_log += tweet_id+"\n"
+                            self.tweet_log += str(tweet_id)+"\n"
                 
             
             # Request replies text
@@ -149,13 +150,13 @@ def __fetch_text_data(self, tweet_ids, domain, headers, request_threshold):
                                 tweet_text_data['replies'] = reply_list
                             else:
                                 if self.log_tweet_significance:
-                                    self.tweet_log += tweet_id+"\n"
+                                    self.tweet_log += str(tweet_id)+"\n"
                     else:
                         if self.log_tweet_significance:
-                            self.tweet_log += tweet_id+"\n"
+                            self.tweet_log += str(tweet_id)+"\n"
                 else:
                     if self.log_tweet_significance:
-                            self.tweet_log += tweet_id+"\n"
+                            self.tweet_log += str(tweet_id)+"\n"
 
         empty_fields = False
         for key in tweet_text_data.keys():

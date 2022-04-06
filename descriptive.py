@@ -1,7 +1,8 @@
 import json
-from preprocessing.data_collection import fetch_data_query
+from preprocessing.data_collection import query_raw_data
+from preprocessing.parsing import parse_query_data
 from logger import Logger
-from nlp.nlp import extract_query_data
+#from nlp.nlp import extract_query_data
 
 # Logger for logging
 log = Logger()
@@ -12,15 +13,15 @@ log = Logger()
 # Extract tweet id's into data/processed folder
 #proc.extract_tweet_ids()
 
-# TODO: Threshold querying and calculate end_time
 # Get tweets by query
-#fetch_data_query(logger=log)
+query_raw_data(logger=log)
 
-# TODO: Get user data
+# Parse out raw query data
+#parse_query_data()
 
-# TODO: Get replies data
+# TODO: Get replies data, parse
 
-# TODO: Parse data out
+# TODO: Get graph data, parse
 
 # TODO: Analyze features
 

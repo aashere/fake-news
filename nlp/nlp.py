@@ -1,19 +1,78 @@
 import pandas as pd
 import json, re
+import nltk
+nltk.download('punkt')
+nltk.download('wordnet')
+nltk.download('omw-1.4')
+nltk.download('averaged_perceptron_tagger')
+from nltk.stem import WordNetLemmatizer
+import spacy
+from spacy import displacy
 from preprocessing.utils import article_time_to_utc, get_end_time_timestamp, is_timestamp_in_range
 
+lemmatizer = WordNetLemmatizer()
+NER = spacy.load("en_core_web_sm")
+
 def remove_stop_words(x, stop_words):
+    # FIlter out punctuation
     cleaned = re.sub('\u2018','\'', x)
     cleaned = re.sub('\u2019','\'', cleaned)
     cleaned = re.sub('\u201c','\'', cleaned)
     cleaned = re.sub('\u201d','\'', cleaned)
     cleaned = re.sub('[!#$%&()*+,.:;<=>?@[\]^_`{|}~\"\'/]', '', cleaned)
+    # Filter out numbers
+    cleaned = re.sub('[0-9]*','', cleaned)
     cleaned = cleaned.split(' ')
     res = []
     for word in cleaned:
         if word not in stop_words:
             res.append(word)
     return ' '.join(res)
+
+def reduce_tokens(tokens):
+    res = []
+    ner_dict = dict()
+    # To eliminate repeated non-NE words
+    pos_dict = dict()
+    # Keep these parts of speech
+    pos_tags = {
+        # Nouns
+        #'NN': 1,
+        #'NNP': 1,
+        #'NNS': 1,
+        # Adjectives
+        'JJ': 1,
+        'JJR': 1,
+        'JJS': 1,
+        # Verbs
+        'VB': 1,
+        'VBN': 1,
+        'VBG': 1,
+        'VBP': 1,
+        'VBZ': 1
+    }
+
+    # Keep named entities
+    ner = NER(tokens)
+
+    for ent in ner.ents:
+        res.append(str(ent))
+        ent_split = str(ent).split(' ')
+        # Hash individual tokens in NERs to a dict for fast lookup later
+        for ent_comp in ent_split:
+            if ent_comp not in ner_dict:
+                ner_dict[ent_comp] = 1
+
+    token_list = tokens.split(' ')
+
+    # POS Tags
+    tagged_tokens = nltk.pos_tag(token_list)
+    
+    for word, pos in tagged_tokens:
+        if word not in ner_dict and pos in pos_tags and word not in pos_dict:
+            pos_dict[word] = 1
+
+    return ' '.join(res + list(pos_dict.keys()))
 
 def extract_query_data(filter=False):
     # Load stop words into dict
@@ -43,8 +102,8 @@ def extract_query_data(filter=False):
     true_df['Statement'] = true_df['Statement'].str.lower()
 
     # Add keywords as new column
-    fake_df['keywords'] = fake_df['Statement'].apply(lambda x: remove_stop_words(x, stop_words))
-    true_df['keywords'] = true_df['Statement'].apply(lambda x: remove_stop_words(x, stop_words))
+    fake_df['keywords'] = fake_df['Statement'].apply(lambda x: reduce_tokens(remove_stop_words(x, stop_words)))
+    true_df['keywords'] = true_df['Statement'].apply(lambda x: reduce_tokens(remove_stop_words(x, stop_words)))
 
     # Add new columns with UTC Timestamp
     fake_df['utc'] = fake_df['Date'].apply(lambda x: article_time_to_utc(x))
