@@ -1,3 +1,4 @@
+from aiohttp import request
 import pandas as pd
 import re, json, time
 from data.raw.tweet_articles.tweet_likes_false import d as false_scraped
@@ -94,7 +95,8 @@ def query_raw_data(logger=None, request_threshold=None):
                 else:
                     f.write(response + ',\n')
             # Sleep 15:05 min between batches
-            time.sleep(905)
+            if not request_threshold:
+                time.sleep(905)
         f.write(']')
 
     with open('data/raw/twitter_data/real_twitter_raw.json', 'w+') as f:
@@ -112,5 +114,6 @@ def query_raw_data(logger=None, request_threshold=None):
                 else:
                     f.write(response + ',\n')
             # Sleep 15:05 min between batches
-            time.sleep(905)
+            if not request_threshold:
+                time.sleep(905)
         f.write(']')

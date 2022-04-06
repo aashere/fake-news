@@ -67,7 +67,6 @@ def query_tweets(article, type, filtered=False, logger=None):
     }
 
     r_dict = make_request(endpoint, request_params)
-    print(r_dict)
     if not r_dict:
         if logger:
             logger.log_query_request_failure(str(article['id']) + ' ' + type)
