@@ -1,6 +1,5 @@
 import json
-from preprocessing.data_collection import query_raw_data
-from preprocessing.parsing import parse_query_data
+from preprocessing.data_collection import get_all_user_data
 from log_func.logger import Logger
 
 #from nlp.nlp import extract_query_data
@@ -17,12 +16,10 @@ log = Logger()
 #proc.extract_tweet_ids()
 
 # Get tweets by query
-query_raw_data(logger=log, request_threshold=10)
+#query_tweets(logger=log)
 
-# Parse out raw query data
-parse_query_data()
-
-# TODO: Get replies data, parse
+# Get user data, parse
+get_all_user_data()
 
 # TODO: Get graph data, parse
 

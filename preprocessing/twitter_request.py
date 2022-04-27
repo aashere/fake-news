@@ -25,23 +25,24 @@ def make_request(endpoint, request_params):
     else:
         return json.loads(r.text)
 
-def batch_request(num_requests, rate_limit=180):
+def batch_request(num_ids, rate_limit=180, request_limit = 1):
     batch_idxs = []
+    num_ids_per_batch = rate_limit*request_limit
 
-    num_splits = ceil(num_requests / rate_limit)
+    num_splits = ceil(num_ids / num_ids_per_batch)
 
     for split in range(num_splits):
-        start_idx = split*rate_limit
+        start_idx = split*num_ids_per_batch
         if split == num_splits - 1:
-            end_idx = start_idx + (num_requests % rate_limit)
+            end_idx = start_idx + (num_ids % num_ids_per_batch)
         else:
-            end_idx = start_idx + rate_limit
+            end_idx = start_idx + num_ids_per_batch
         batch_idxs.append((start_idx, end_idx))
     return batch_idxs
 
 # Filtered means did we previously filter articles to only be in last 7 days
-def query_tweets(article, type, filtered=False, logger=None):
-    endpoint = "/2/tweets/search/recent"
+def query_tweets(article, type, filtered=False, logger=None, max_results=100):
+    endpoint = "/1.1/search/tweets.json"
     tweet_fields_args = ','.join(['text','conversation_id','geo','created_at','public_metrics','author_id'])
     user_fields_args = ','.join(['username','created_at','public_metrics','location'])
 
@@ -55,7 +56,7 @@ def query_tweets(article, type, filtered=False, logger=None):
         end_time = article['utc']
     else:
         end_time = get_end_time_timestamp()
-    max_results = 10
+    max_results = max_results
 
     request_params = {
         'query': query,
@@ -72,98 +73,22 @@ def query_tweets(article, type, filtered=False, logger=None):
             logger.log_query_request_failure(str(article['id']) + ' ' + type)
         return None
 
-    return json.dumps({'id': article['id'], 'response': r_dict})      
+    return json.dumps({'id': article['id'], 'response': r_dict})  
 
-def fetch_replies(self, conversation_id):
-    pass
+def fetch_user_data(user_ids):
+    endpoint = "/2/users"
+    user_fields_args = ','.join(['created_at','public_metrics','location'])
+
+    request_params = {
+        'ids': user_ids,
+        'user.fields': user_fields_args,
+    }
+
+    r_dict = make_request(endpoint, request_params)
+    if not r_dict:
+        return None
+
+    return {'response': r_dict}      
 
 def fetch_graph_data(self, user_id):
     pass
-
-def __fetch_text_data(self, tweet_ids, domain, headers, request_threshold):
-    text_data = []
-
-    for i, tweet_id in enumerate(tweet_ids):
-        if i < request_threshold:
-            # Tweet data item
-            tweet_text_data = {
-                'tweet_id': tweet_id,
-                'tweet_text': None,
-                'replies': None
-            }
-
-            # Request tweet text
-            r = requests.get(domain + '/2/tweets/' + tweet_id, headers=headers)
-            if r.status_code != 200:
-                print('Tweet Text Request Failed for ID: {}'.format(tweet_id))
-            else:
-                response = json.loads(r.text)
-                if 'data' in response:
-                    tweet_data = response['data']
-                    if 'text' in tweet_data:
-                        tweet_text = tweet_data['text']
-                        # Filter out urls from tweet text
-                        text_list = re.split('\s',tweet_text)
-                        filtered_text = ""
-                        for text in text_list:
-                            if 'http' not in text:
-                                filtered_text += " " + text
-                        tweet_text_data['tweet_text'] = filtered_text
-                    else:
-                        if self.log_tweet_significance:
-                            self.tweet_log += str(tweet_id)+"\n"
-                else:
-                    if self.log_tweet_significance:
-                            self.tweet_log += str(tweet_id)+"\n"
-                
-            
-            # Request replies text
-            # First grab conversation_id of the tweet
-            r = requests.get(domain + '/2/tweets/' + tweet_id + '?tweet.fields=conversation_id', headers=headers)
-            if r.status_code != 200:
-                print('Tweet Conversation ID Request Failed for ID: {}'.format(tweet_id))
-            else:
-                response = json.loads(r.text)
-                if 'data' in response:
-                    response_data = response['data']
-                    if 'conversation_id' in response_data:
-                        conv_id = response_data['conversation_id']
-                        # Then grab all tweets corresponding to this conversation
-                        r = requests.get(domain + '/2/tweets/search/recent?max_results=100&query=conversation_id:' + conv_id, headers=headers)
-                        if r.status_code != 200:
-                            print('Tweet Replies Fetching Failed for ID: {}'.format(tweet_id))
-                        else:
-                            reply_list = []
-                            response = json.loads(r.text)
-                            if 'data' in response:
-                                replies = response['data']
-                                for reply in replies:
-                                    reply_text = reply['text']
-                                    # Filter out urls from reply text
-                                    text_list = re.split('\s', reply_text)
-                                    filtered_text = ""
-                                    for text in text_list:
-                                        if 'http' not in text:
-                                            filtered_text += " " + text
-                                    reply_list.append(filtered_text)
-                                tweet_text_data['replies'] = reply_list
-                            else:
-                                if self.log_tweet_significance:
-                                    self.tweet_log += str(tweet_id)+"\n"
-                    else:
-                        if self.log_tweet_significance:
-                            self.tweet_log += str(tweet_id)+"\n"
-                else:
-                    if self.log_tweet_significance:
-                            self.tweet_log += str(tweet_id)+"\n"
-
-        empty_fields = False
-        for key in tweet_text_data.keys():
-            if tweet_text_data[key] is None:
-                empty_fields = True
-        if empty_fields:
-            continue
-        else:
-            text_data.append(tweet_text_data)
-        
-    return json.dumps(text_data)
