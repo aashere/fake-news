@@ -35,6 +35,24 @@ for type in ['fake', 'real']:
 
     # Join datasets together
     final_df = pd.merge(twitter_df, user_df, on='user_id', how='left')
+
+    if type == 'fake':
+        # Cleaning
+        # Drop missing tweet ids
+        final_df.iloc[:,0] = final_df.iloc[:,0].astype(str)
+        final_df = final_df[final_df.iloc[:,0].str.match('[0-9]+', na=False)]
+        final_df.iloc[:,0] = final_df.iloc[:,0].astype('int64').astype(str)
+
+        # Fix data types
+        final_df.iloc[:,1] = final_df.iloc[:,1].astype('int64').astype(str)
+        final_df.iloc[:,5] = final_df.iloc[:,5].astype('int64').astype(str)
+
+    # Drop columns with less than 50% null values
+    null_cols = []
+    for col in list(final_df.columns):
+        if final_df.loc[:,col].isna().sum() > 0.5*final_df.shape[0]:
+            null_cols.append(col)
+    final_df = final_df.drop(columns=null_cols)
     
     # Write to file
     final_df.to_csv(file_paths[type]['final_write'], index=False)
