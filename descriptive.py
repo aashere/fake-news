@@ -19,7 +19,7 @@ log = Logger()
 #query_tweets(logger=log)
 
 # Get user data, parse
-get_all_user_data()
+#get_all_user_data()
 
 # TODO: Get graph data, parse
 
