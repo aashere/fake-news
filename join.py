@@ -31,7 +31,7 @@ for type in ['fake', 'real']:
 
     # Cleaning step
     user_df = user_df[user_df['user_id'] != 'user_id']
-    twitter_df['user_id'] = twitter_df['user_id'].astype('object')
+    twitter_df['user_id'] = twitter_df['user_id'].astype(str)
 
     # Join datasets together
     final_df = pd.merge(twitter_df, user_df, on='user_id', how='left')
