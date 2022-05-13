@@ -1,3 +1,0 @@
-{"api-key": "90aB0hZkVtrl4wEIcqUAyC8mE",
-"api-key-secret": "S2hCaqXtmSxgHkutBMJndcRj30AF4VPQHGbJuOGIq4GsDuGgDX",
-"bearer-token": "AAAAAAAAAAAAAAAAAAAAADiEaQEAAAAAr1AsDktEpTKSE%2BpbPQiFMXrdfwQ%3DrfJJGewbFTbmjgmzjXcKKbZTxVj83TNSzEsvF2Lk16iUZZ0iFC"}
