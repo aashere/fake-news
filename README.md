@@ -1,7 +1,7 @@
 # Fake News Classification Project
 #### Ameya Shere, Avery Greenberg, and Steve Zhao
 
-In this project, we attempt to classify misinformation on Twitter. After achieving limited results with models that classify at the Tweet level, we develop a context-based heuristic that can classify subtopics as True or False. This heuristic could be used to improve the performance of more general classification models in this domain.
+In this project, we attempt to classify misinformation on Twitter. After achieving limited results with models that classify at the Tweet level, we develop a context-based heuristic that can classify subtopics as Real or Fake. This heuristic could be used to improve the performance of more general classification models in this domain.
 
 ## Directory Structure
 This codebase is structured as follows:
